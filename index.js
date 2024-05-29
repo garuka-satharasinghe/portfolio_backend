@@ -4,6 +4,9 @@ const port = 5000;
 
 app.use(express.json());
 
+const cors = require("cors");
+app.use(cors());
+
 require("dotenv").config();
 const Project = require("./Project");
 const Blog = require("./Blog");
