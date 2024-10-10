@@ -73,5 +73,7 @@ app.get("/blogs", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}/`);
+  console.log(
+    `Server running at https://vercel.live/link/portfolio-backend-mauve-mu.vercel.app?via=project-dashboard-alias-list&p=1/`
+  );
 });
