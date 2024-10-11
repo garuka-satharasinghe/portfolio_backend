@@ -12,7 +12,7 @@ app.use(authRoutes);
 
 // MongoDB connection
 mongoose
-  .connect(process.env.MONGODB_URI, {
+  .connect(process.env.DB_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
