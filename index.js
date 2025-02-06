@@ -1,4 +1,5 @@
 const express = require("express");
+const multer = require("multer");
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -11,6 +12,9 @@ require("dotenv").config();
 const Project = require("./Project");
 const Blog = require("./Blog");
 
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
 app.get("/", (req, res) => {
   res.send("Hello, World!");
 });
@@ -18,14 +22,44 @@ app.get("/", (req, res) => {
 app.get("/projects", async (req, res) => {
   try {
     const projects = await Project.find();
-    res.json(projects);
+    const projectsWithBase64Images = projects.map((project) => {
+      if (project.img && project.img.data) {
+        console.log(
+          "Converting image data to Base64 for project:",
+          project.name
+        );
+        return {
+          ...project._doc,
+          img: {
+            data: project.img.data.toString("base64"),
+            contentType: project.img.contentType,
+          },
+        };
+      } else {
+        console.log("No image data found for project:", project.name);
+        return {
+          ...project._doc,
+          img: null,
+        };
+      }
+    });
+    res.json(projectsWithBase64Images);
   } catch (err) {
+    console.error("Error fetching projects:", err);
     res.status(500).json({ message: err.message });
   }
 });
 
-app.post("/projects", async (req, res) => {
-  const project = new Project(req.body);
+app.post("/projects", upload.single("img"), async (req, res) => {
+  const project = new Project({
+    name: req.body.name,
+    description: req.body.description,
+    link: req.body.link,
+    img: {
+      data: req.file.buffer,
+      contentType: req.file.mimetype,
+    },
+  });
 
   try {
     const newProject = await project.save();
@@ -35,11 +69,19 @@ app.post("/projects", async (req, res) => {
   }
 });
 
-app.patch("/projects/:id", async (req, res) => {
+app.patch("/projects/:id", upload.single("img"), async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
     if (project) {
-      project.set(req.body);
+      project.name = req.body.name || project.name;
+      project.description = req.body.description || project.description;
+      project.link = req.body.link || project.link;
+      if (req.file) {
+        project.img = {
+          data: req.file.buffer,
+          contentType: req.file.mimetype,
+        };
+      }
       const updatedProject = await project.save();
       res.json(updatedProject);
     } else {
