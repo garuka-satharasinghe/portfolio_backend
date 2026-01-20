@@ -3,14 +3,24 @@ const multer = require("multer");
 const app = express();
 const port = process.env.PORT || 5000;
 
+require("dotenv").config();
+require("./db");
+
 app.use(express.json());
 
 const cors = require("cors");
-app.use(cors());
+const cookieParser = require("cookie-parser");
+app.use(cors({
+  origin: "http://localhost:3000", // your Nuxt frontend URL
+  credentials: true
+}));
+app.use(cookieParser());
 
-require("dotenv").config();
 const Project = require("./Project");
 const Blog = require("./Blog");
+
+const authRoutes = require("./routes/auth");
+app.use(authRoutes);
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
