@@ -11,7 +11,7 @@ app.use(express.json());
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 app.use(cors({
-  origin: "http://localhost:3000", // your Nuxt frontend URL
+  origin: "https://garuka-satharasinghe.vercel.app", 
   credentials: true
 }));
 app.use(cookieParser());
