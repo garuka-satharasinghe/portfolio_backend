@@ -118,7 +118,78 @@ app.delete("/projects/:id", async (req, res) => {
 app.get("/blogs", async (req, res) => {
   try {
     const blogs = await Blog.find();
-    res.json(blogs);
+    const blogsWithBase64Images = blogs.map((blog) => {
+      if (blog.img && blog.img.data) {
+        return {
+          ...blog._doc,
+          img: {
+            data: blog.img.data.toString("base64"),
+            contentType: blog.img.contentType,
+          },
+        };
+      } else {
+        return {
+          ...blog._doc,
+          img: null,
+        };
+      }
+    });
+    res.json(blogsWithBase64Images);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post("/blogs", upload.single("img"), async (req, res) => {
+  const blog = new Blog({
+    title: req.body.title,
+    content: req.body.content,
+    link: req.body.link,
+    img: req.file ? {
+      data: req.file.buffer,
+      contentType: req.file.mimetype,
+    } : undefined,
+  });
+
+  try {
+    const newBlog = await blog.save();
+    res.status(201).json(newBlog);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+app.patch("/blogs/:id", upload.single("img"), async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.id);
+    if (blog) {
+      blog.title = req.body.title || blog.title;
+      blog.content = req.body.content || blog.content;
+      blog.link = req.body.link || blog.link;
+      if (req.file) {
+        blog.img = {
+          data: req.file.buffer,
+          contentType: req.file.mimetype,
+        };
+      }
+      const updatedBlog = await blog.save();
+      res.json(updatedBlog);
+    } else {
+      res.status(404).json({ message: "Blog not found" });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete("/blogs/:id", async (req, res) => {
+  try {
+    const result = await Blog.findByIdAndDelete(req.params.id);
+    if (result) {
+      res.json({ message: "Blog deleted" });
+    } else {
+      res.status(404).json({ message: "Blog not found" });
+    }
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
